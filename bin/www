@@ -19,4 +19,8 @@ io.on("connection", function(client){
 
 		client.broadcast.emit("new-product-available", product);
 	});
+
+	client.on("login", function(user){
+		console.log(user);
+	});
 });

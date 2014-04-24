@@ -5,6 +5,15 @@
     <link rel='stylesheet' href='/stylesheets/style.css' />
   </head>
   <body>
+    <form id="login">
+        <input id="email" type="email" placeholder="email"/>
+        <input id="password" type="password" />
+
+        <input type="submit" value="Login"/>
+    </form>
+
+    <div id="login-message"></div>
+
     <h1>New Product</h1>
     
     <form id="new-product">
@@ -33,6 +42,20 @@
 
                 var content = product.name + " for " + product.price;
                 $("#last-product").html(content);
+            });
+
+            $("#login").submit(function(event){
+                var login = $("#email").val();
+                var password = $("#password").val(); 
+
+                var user = {
+                    "login" : login,
+                    "password" : password
+                };
+
+                socket.emit("login", user);
+
+                event.preventDefault();
             });
 
     		$("#new-product").submit(function(event){
