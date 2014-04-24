@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+var debug = require('debug')('my-application');
+var app = require('../app');
+
+app.set('port', process.env.PORT || 3000);
+
+var server = app.listen(app.get('port'), function() {
+  debug('Express server listening on port ' + server.address().port);
+});
+
+var io = require('socket.io').listen(server);
+
+io.on("connection", function(client){
+	console.log("new client connected!");
+
+	client.on("new-product", function(product){
+		console.log("Received a new product!");
+		console.log(product);
+	});
+});
