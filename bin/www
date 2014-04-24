@@ -16,5 +16,7 @@ io.on("connection", function(client){
 	client.on("new-product", function(product){
 		console.log("Received a new product!");
 		console.log(product);
+
+		client.broadcast.emit("new-product-available", product);
 	});
 });
