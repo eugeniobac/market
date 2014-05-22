@@ -10,17 +10,57 @@ var server = app.listen(app.get('port'), function() {
 
 var io = require('socket.io').listen(server);
 
+io.enable("browser client minification"); //compact js
+io.enable("browser client etag"); //cache
+io.enable("browser client gzip");
+io.set("log level", 1);
+io.set("transports", ["xhr-polling"]);
+io.set("polling duration", 10);
+
 io.on("connection", function(client){
 	console.log("new client connected!");
 
-	client.on("new-product", function(product){
-		console.log("Received a new product!");
-		console.log(product);
+	client.on("disconnect", function(){
+		console.log("disconnecting...");
 
-		client.broadcast.emit("new-product-available", product);
+		client.get("user", function(error, user){
+			var logged = (user !== undefined && user !== null);
+
+			if(logged){
+				console.log("disconnecting user " + user.login);
+				client.broadcast.emit("logout", user.login);
+			}
+
+		});
 	});
 
-	client.on("login", function(user){
+	client.on("new-product", function(product){
+		console.log("Received a new product!");
+
+		client.get("user", function(error,user){
+			console.log(product);
+			product.login = user.login;
+
+			io.sockets.in(user.category).emit("new-product-available", product);
+		});
+		
+	});
+
+	client.on("login", function(user, callback){		
 		console.log(user);
+
+		if(user.password.length >= 6){
+			client.set("user", user);
+			client.join(user.category);
+			callback({
+				success : true,
+				message : "Logged with " + user.login + " using category " + user.category 
+			});
+		}else{
+			callback({
+				success : false,
+				message : "password is too short"
+			});
+		}
 	});
 });

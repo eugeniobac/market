@@ -8,52 +8,81 @@
     <form id="login">
         <input id="email" type="email" placeholder="email"/>
         <input id="password" type="password" />
+        <input type="text" id="category" placeholder="category of your interest" />
 
         <input type="submit" value="Login"/>
     </form>
 
     <div id="login-message"></div>
 
-    <h1>New Product</h1>
-    
-    <form id="new-product">
-    	<input id="name" type="text" placeholder="Name of product"/>
-    	<input id="price" type="number" placeholder="Price"/>
-    	<input type="submit" value="Save" />
-    </form>
+    <div id="new-product-area">
+        <h1>New Product</h1>
+        
+        <form id="new-product">
+        	<input id="name" type="text" placeholder="Name of product"/>
+        	<input id="price" type="number" placeholder="Price"/>
+        	<input type="submit" value="Save" />
+        </form>
+    </div>
 
     <h1>Last available product: </h1>
-    
-    <div id="last-product">
+    <div id="last-product"></div>    
 
-    </div>    
+    <h1>All products available: </h1>
+    <div id="all-products"></div>    
 
     <script src="/javascripts/jquery-1.11.0.min.js" type="text/javascript"></script>
     <script src="/socket.io/socket.io.js" type="text/javascript"></script>
 
     <script type="text/javascript">
     	$(function(){
-
     		var socket = io.connect(document.URL);
+
+            socket.on("logout", function(login){
+                console.log("desconnecting user " + login);
+
+                $(".product-to-sell").each(function(index, element){
+                    var div = $(element);
+
+                    if(div.data("login") === login){
+                        div.remove();
+                    };
+                });
+            });
 
             socket.on("new-product-available", function(product){
                 console.log("there is a new product available");
                 console.log(product);
 
-                var content = product.name + " for " + product.price;
-                $("#last-product").html(content);
+                var content = product.name + " for " + product.price + " - " + product.login;
+
+                var div = $("<div class='product-to-sell'/>");
+                div.attr("data-login", product.login);
+                div.html(content);
+
+                $("#last-product").html(div);
+                $("#all-products").append(div.clone());
             });
 
             $("#login").submit(function(event){
                 var login = $("#email").val();
                 var password = $("#password").val(); 
+                var category = $("#category").val(); 
 
                 var user = {
                     "login" : login,
-                    "password" : password
+                    "password" : password,
+                    "category" : category
                 };
 
-                socket.emit("login", user);
+                socket.emit("login", user, function(data){
+                    if(data.success){
+                        $("#login").hide();
+                        $("#new-product-area").show();
+                    }
+
+                    $("#login-message").html(data.message);
+                });
 
                 event.preventDefault();
             });
